@@ -1204,7 +1204,27 @@ def send_confirmation_to_client(client_email, client_name, project_details, cost
         </html>
         """
         
-        # Send email using Python SMTP (no domain verification needed)
+        # Try Resend API first (more reliable for cloud deployments)
+        try:
+            params = {
+                "from": os.getenv('EMAIL_FROM', 'onboarding@resend.dev'),
+                "to": [client_email],
+                "subject": f"🎯 Project Confirmation Required - {client_name}",
+                "html": html_content,
+            }
+            
+            print(f"📧 Sending confirmation email via Resend to {client_email}")
+            result = resend.Emails.send(params)
+            
+            if result.get("id"):
+                print(f"✅ Confirmation email sent successfully via Resend to {client_email}. Message ID: {result['id']}")
+                return True, f"Email sent successfully to {client_email}"
+            else:
+                print(f"⚠️ Resend API returned no ID, falling back to SMTP")
+        except Exception as resend_error:
+            print(f"⚠️ Resend API failed: {resend_error}, falling back to SMTP")
+        
+        # Fallback to SMTP if Resend fails
         return send_email_via_python_smtp(
             client_email, 
             f"🎯 Project Confirmation Required - {client_name}", 
