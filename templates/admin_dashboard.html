@@ -1054,11 +1054,13 @@
 
         // Logout
         function logout() {
+            console.log('Logout function called');
             // Call logout API in background, redirect immediately
             fetch('/api/admin/logout', { method: 'POST' })
                 .then(() => console.log('Logout successful'))
                 .catch(err => console.error('Logout error:', err));
-            window.location.href = '/admin_login';
+            console.log('Redirecting to /admin_login');
+            window.location.replace('/admin_login');
         }
 
         // Admin confirm project function
