@@ -624,7 +624,7 @@
                     document.getElementById('summary-content').innerHTML = result.ai_reply;
                     
                     // Show email status
-                    if (result.email_sent) {
+                    if (result.client_email_sent) {
                         setTimeout(() => {
                             addMessage('ai', '✅ Your requirements have been documented and a professional email has been sent to your inbox. Thank you for using our AI assistant!');
                         }, 1000);
