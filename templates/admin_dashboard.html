@@ -1053,14 +1053,12 @@
         }
 
         // Logout
-        async function logout() {
-            try {
-                await fetch('/api/admin/logout', { method: 'POST' });
-                window.location.href = '/admin_login';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = '/admin_login';
-            }
+        function logout() {
+            // Call logout API in background, redirect immediately
+            fetch('/api/admin/logout', { method: 'POST' })
+                .then(() => console.log('Logout successful'))
+                .catch(err => console.error('Logout error:', err));
+            window.location.href = '/admin_login';
         }
 
         // Admin confirm project function
