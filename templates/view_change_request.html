@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Request Details - Admin Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            max-width: 1000px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .client-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .client-info h2 {
+            margin: 0 0 15px 0;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        .client-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #1e293b;
+            font-size: 16px;
+            word-break: break-word;
+        }
+
+        .changes-section {
+            background: #fff3e0;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #f57c00;
+        }
+
+        .changes-section h3 {
+            margin: 0 0 15px 0;
+            color: #ef6c00;
+            font-size: 18px;
+        }
+
+        .changes-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 15px;
+            border: 1px solid #ffcc80;
+        }
+
+        .budget-section {
+            background: #e8f5e8;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .budget-section h3 {
+            margin: 0 0 15px 0;
+            color: #2e7d32;
+            font-size: 18px;
+        }
+
+        .budget-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 15px;
+            border: 1px solid #a5d6a7;
+        }
+
+        .original-project {
+            background: #f3f4f6;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .original-project h3 {
+            margin: 0 0 15px 0;
+            color: #374151;
+            font-size: 18px;
+        }
+
+        .project-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 14px;
+            border: 1px solid #d1d5db;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            padding: 30px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-info {
+            background: #06b6d4;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .response-section {
+            background: #f0f9ff;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #0ea5e9;
+        }
+
+        .response-section h3 {
+            margin: 0 0 15px 0;
+            color: #0c4a6e;
+            font-size: 18px;
+        }
+
+        .response-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .notes-section {
+            background: #fef3c7;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .notes-section h3 {
+            margin: 0 0 15px 0;
+            color: #92400e;
+            font-size: 18px;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            height: 80px;
+            padding: 15px;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .client-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Change Request Management</h1>
+            <p>Review and respond to client change requests</p>
+        </div>
+
+        <div class="content">
+            <!-- Client Information -->
+            <div class="client-info">
+                <h2>👤 Client Information</h2>
+                <div class="client-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Name</div>
+                        <div class="detail-value">{{ project.name }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Email</div>
+                        <div class="detail-value">{{ project.email }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Requested On</div>
+                        <div class="detail-value">{{ project.change_request.requested_at if project.change_request else 'N/A' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            <span style="background: #fff3e0; color: #ef6c00; padding: 4px 8px; border-radius: 12px; font-size: 12px;">
+                                🔄 Changes Requested
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requested Changes -->
+            <div class="changes-section">
+                <h3>💬 Requested Changes</h3>
+                <div class="changes-content">{{ project.change_request.changes }}</div>
+            </div>
+
+            <!-- Budget Changes -->
+            {% if project.change_request.budget_changes %}
+            <div class="budget-section">
+                <h3>💰 Budget Changes</h3>
+                <div class="budget-content">{{ project.change_request.budget_changes }}</div>
+            </div>
+            {% endif %}
+
+            <!-- Original Project Details -->
+            <div class="original-project">
+                <h3>📋 Original Project Details</h3>
+                <div class="project-content">{{ project.project_details }}</div>
+            </div>
+
+            <!-- Admin Response -->
+            <div class="response-section">
+                <h3>📧 Admin Response</h3>
+                <form method="POST" action="/api/approve-changes/{{ project._id }}">
+                    <textarea name="admin_response" class="response-textarea" placeholder="Enter your response to the client..." required></textarea>
+                    
+                    <div style="margin-top: 15px;">
+                        <h4 style="margin-bottom: 10px; color: #0c4a6e;">📝 Internal Notes (Private)</h4>
+                        <textarea name="admin_notes" class="notes-textarea" placeholder="Add internal notes for your team..."></textarea>
+                    </div>
+                    
+                    <div class="actions">
+                        <button type="submit" class="btn btn-success">
+                            ✅ Approve Changes
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="requestClarification()">
+                            ❓ Request Clarification
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="rejectChanges()">
+                            ❌ Reject Changes
+                        </button>
+                        <a href="/admin_dashboard" class="btn btn-secondary">
+                            ⬅️ Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function requestClarification() {
+            const response = document.querySelector('textarea[name="admin_response"]');
+            if (!response.value.trim()) {
+                alert('Please enter clarification questions before proceeding.');
+                return;
+            }
+            
+            // Submit as clarification request
+            const form = document.querySelector('form');
+            form.action = `/api/request-clarification/{{ project._id }}`;
+            form.submit();
+        }
+
+        function rejectChanges() {
+            const response = document.querySelector('textarea[name="admin_response"]');
+            if (!response.value.trim()) {
+                alert('Please enter rejection reason before proceeding.');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reject these changes?')) {
+                return;
+            }
+            
+            // Submit as rejection
+            const form = document.querySelector('form');
+            form.action = `/api/reject-changes/{{ project._id }}`;
+            form.submit();
+        }
+    </script>
+</body>
+</html>

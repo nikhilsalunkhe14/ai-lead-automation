@@ -8,10 +8,8 @@ python-dateutil
 bcrypt
 flask-limiter
 flask-talisman
-cryptography
-validators
 email-validator
-chromadb
-sentence-transformers
-numpy
-faiss-cpu
+pyotp
+flask-socketio
+python-socketio
+python-engineio

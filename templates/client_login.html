@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portal - AI Lead Automation</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+        h1 { font-size: 1.45rem; color: #1e293b; margin-bottom: 6px; }
+        .subtitle { color: #64748b; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.5; }
+        .tabs { display: flex; gap: 6px; margin-bottom: 20px; background: #f1f5f9; padding: 4px; border-radius: 10px; }
+        .tab {
+            flex: 1; padding: 10px 8px; border: none; background: transparent;
+            border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; color: #64748b;
+        }
+        .tab.active { background: white; color: #4f46e5; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        label { display: block; font-weight: 600; color: #374151; margin-bottom: 6px; font-size: 0.85rem; }
+        input {
+            width: 100%; padding: 12px 14px; border: 1px solid #d1d5db;
+            border-radius: 8px; margin-bottom: 14px; font-size: 1rem;
+        }
+        button.primary {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white; border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        button.primary:disabled { opacity: 0.6; }
+        .error, .success {
+            padding: 12px; border-radius: 8px; margin-bottom: 14px; font-size: 0.9rem; display: none;
+        }
+        .error { background: #fef2f2; color: #b91c1c; }
+        .success { background: #ecfdf5; color: #065f46; }
+        .hint { font-size: 0.8rem; color: #94a3b8; margin: -8px 0 12px; }
+        .back { display: block; text-align: center; margin-top: 18px; color: #6366f1; text-decoration: none; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>💬 Client Portal</h1>
+        <p class="subtitle">Use the <strong>same email</strong> as your project chat or confirmation email. Your AI conversation and admin messages are saved in one place.</p>
+
+        <div class="tabs">
+            <button type="button" class="tab active" data-tab="login">Log in</button>
+            <button type="button" class="tab" data-tab="signup">Sign up</button>
+            <button type="button" class="tab" data-tab="otp">Email code</button>
+        </div>
+
+        <div id="error-box" class="error"></div>
+        <div id="success-box" class="success"></div>
+
+        <div id="panel-login" class="panel active">
+            <form id="login-form">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" required placeholder="you@example.com">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" required placeholder="Your password" minlength="8">
+                <button type="submit" class="primary" id="login-btn">Log in</button>
+            </form>
+        </div>
+
+        <div id="panel-signup" class="panel">
+            <form id="signup-form">
+                <label for="signup-name">Full name</label>
+                <input type="text" id="signup-name" required placeholder="Your name">
+                <label for="signup-email">Email</label>
+                <input type="email" id="signup-email" required placeholder="Project email">
+                <p class="hint">Must match the email used on the AI chat / project summary.</p>
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" required minlength="8" placeholder="Min 8 chars, upper, lower, number, special">
+                <button type="submit" class="primary" id="signup-btn">Create account</button>
+            </form>
+        </div>
+
+        <div id="panel-otp" class="panel">
+            <form id="otp-request-form">
+                <label for="otp-email">Email</label>
+                <input type="email" id="otp-email" required placeholder="you@example.com">
+                <button type="submit" class="primary" id="otp-send-btn">Send login code</button>
+            </form>
+            <form id="otp-verify-form" style="margin-top:16px;display:none;">
+                <label for="otp-code">6-digit code</label>
+                <input type="text" id="otp-code" required maxlength="6" pattern="[0-9]{6}" placeholder="000000">
+                <button type="submit" class="primary" id="otp-verify-btn">Verify &amp; log in</button>
+            </form>
+        </div>
+
+        <a class="back" href="/">← Back to home</a>
+    </div>
+
+    <script>
+        const errBox = document.getElementById('error-box');
+        const okBox = document.getElementById('success-box');
+
+        function showError(msg) {
+            errBox.textContent = msg;
+            errBox.style.display = 'block';
+            okBox.style.display = 'none';
+        }
+        function showSuccess(msg) {
+            okBox.textContent = msg;
+            okBox.style.display = 'block';
+            errBox.style.display = 'none';
+        }
+        function hideAlerts() {
+            errBox.style.display = 'none';
+            okBox.style.display = 'none';
+        }
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+                hideAlerts();
+            });
+        });
+
+        function onAuthSuccess(data) {
+            localStorage.setItem('clientEmail', data.email);
+            localStorage.setItem('clientName', data.name);
+            localStorage.setItem('clientLeadId', data.lead_id);
+            window.location.href = data.redirect || `/client_chat?email=${encodeURIComponent(data.email)}&lead_id=${data.lead_id}`;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/client/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: document.getElementById('login-email').value.trim(),
+                        password: document.getElementById('login-password').value,
+                    }),
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') onAuthSuccess(data);
+                else showError(data.message || 'Login failed');
+            } catch {
+                showError('Network error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            const btn = document.getElementById('signup-btn');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/client/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        name: document.getElementById('signup-name').value.trim(),
+                        email: document.getElementById('signup-email').value.trim(),
+                        password: document.getElementById('signup-password').value,
+                    }),
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') onAuthSuccess(data);
+                else showError(data.message || 'Sign up failed');
+            } catch {
+                showError('Network error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('otp-request-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            const btn = document.getElementById('otp-send-btn');
+            btn.disabled = true;
+            try {
+                const email = document.getElementById('otp-email').value.trim();
+                const res = await fetch('/api/client/request-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email }),
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    showSuccess(data.message);
+                    document.getElementById('otp-verify-form').style.display = 'block';
+                } else showError(data.message || 'Could not send code');
+            } catch {
+                showError('Network error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('otp-verify-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            const btn = document.getElementById('otp-verify-btn');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/client/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: document.getElementById('otp-email').value.trim(),
+                        otp: document.getElementById('otp-code').value.trim(),
+                    }),
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') onAuthSuccess(data);
+                else showError(data.message || 'Invalid code');
+            } catch {
+                showError('Network error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

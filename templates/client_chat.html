@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Chat - AI Lead Automation</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; }
+        .chat-container { max-width: 900px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; background: white; }
+        .chat-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .chat-header h2 { font-size: 1.15rem; }
+        .chat-header p { font-size: 0.85rem; opacity: 0.9; }
+        .header-actions { display: flex; gap: 8px; }
+        .header-actions button, .header-actions a {
+            padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; text-decoration: none;
+            border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.15); color: white;
+        }
+        .status-banner {
+            padding: 12px 20px; font-size: 14px; display: none;
+        }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; background: #f8fafc; }
+        .section-label {
+            text-align: center; font-size: 0.75rem; color: #94a3b8; margin: 16px 0 8px;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .chat-message {
+            margin-bottom: 12px; padding: 10px 14px; border-radius: 12px; max-width: 82%;
+            line-height: 1.45; font-size: 0.95rem;
+        }
+        .chat-message.admin { background: #3b82f6; color: white; margin-left: auto; }
+        .chat-message.client { background: #e2e8f0; color: #1e293b; margin-right: auto; }
+        .chat-message.ai { background: #f3e8ff; color: #581c87; margin-right: auto; border: 1px solid #e9d5ff; }
+        .chat-message.ai-assistant { background: #ede9fe; color: #5b21b6; margin-left: auto; border: 1px solid #ddd6fe; }
+        .chat-message .sender { font-weight: 600; font-size: 11px; margin-bottom: 4px; opacity: 0.85; }
+        .chat-message .timestamp { font-size: 10px; opacity: 0.65; margin-top: 6px; }
+        .chat-input { padding: 16px; background: white; border-top: 1px solid #e2e8f0; }
+        .input-group { display: flex; gap: 10px; }
+        .input-group input { flex: 1; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; }
+        .input-group button {
+            padding: 12px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;
+        }
+        .notification {
+            position: fixed; top: 20px; right: 20px; padding: 14px 18px;
+            border-radius: 8px; color: white; z-index: 1001;
+        }
+        .notification.success { background: #10b981; }
+        .notification.error { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div>
+                <h2>💬 Project conversations</h2>
+                <p id="client-label">Loading...</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" onclick="loadChatHistory()">Refresh</button>
+                <button type="button" onclick="logout()">Log out</button>
+            </div>
+        </div>
+        <div id="status-banner" class="status-banner"></div>
+        <div id="chat-messages" class="chat-messages">
+            <div style="text-align:center;color:#64748b;padding:50px;">
+                <i class="fas fa-spinner fa-spin"></i> Loading your conversations...
+            </div>
+        </div>
+        <div class="chat-input">
+            <p style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">Message your project manager (saved permanently)</p>
+            <div class="input-group">
+                <input type="text" id="client-message-input" placeholder="Type a message to admin..." />
+                <button type="button" onclick="sendClientMessage()"><i class="fas fa-paper-plane"></i> Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let clientEmail = '';
+        let clientName = '';
+        let leadId = '';
+        let socket = null;
+
+        async function ensureSession() {
+            const res = await fetch('/api/client/me', { credentials: 'include' });
+            if (!res.ok) {
+                window.location.href = '/client_login';
+                return false;
+            }
+            const data = await res.json();
+            clientEmail = data.email;
+            clientName = data.name || 'Client';
+            leadId = data.lead_id || '';
+            localStorage.setItem('clientEmail', clientEmail);
+            localStorage.setItem('clientName', clientName);
+            if (leadId) localStorage.setItem('clientLeadId', leadId);
+            document.getElementById('client-label').textContent = `${clientName} • ${clientEmail}`;
+            return true;
+        }
+
+        function initSocket() {
+            if (typeof io === 'undefined' || !leadId) return;
+            socket = io({ withCredentials: true });
+            socket.on('connect', () => {
+                socket.emit('join_lead_room', { lead_id: leadId, user_type: 'client' });
+            });
+            socket.on('changes_approved', showStatusUpdate);
+            socket.on('changes_approved_realtime', showStatusUpdate);
+            socket.on('changes_rejected', (d) => showStatusUpdate({ ...d, status: 'rejected' }));
+            socket.on('changes_rejected_realtime', (d) => showStatusUpdate({ ...d, status: 'rejected' }));
+            socket.on('clarification_requested', showStatusUpdate);
+            socket.on('new_message', () => loadChatHistory());
+            socket.on('message_received', () => loadChatHistory());
+        }
+
+        function showStatusUpdate(data) {
+            const banner = document.getElementById('status-banner');
+            const approved = (data.status || '').includes('approved');
+            banner.style.display = 'block';
+            banner.style.background = approved ? '#ecfdf5' : '#fff7ed';
+            banner.style.color = approved ? '#065f46' : '#9a3412';
+            banner.innerHTML = approved
+                ? `✅ <strong>Changes approved!</strong> ${escapeHtml(data.admin_response || '')}`
+                : `📝 <strong>Admin update:</strong> ${escapeHtml(data.admin_response || '')}`;
+            showNotification(approved ? 'Your changes were approved!' : 'Admin sent an update', approved ? 'success' : 'error');
+            loadChatHistory();
+        }
+
+        function loadChatHistory() {
+            if (!clientEmail) return;
+            fetch(`/api/chat-history/${encodeURIComponent(clientEmail)}`, { credentials: 'include' })
+                .then(r => {
+                    if (r.status === 401) { window.location.href = '/client_login'; return null; }
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data) return;
+                    if (data.lead_id) {
+                        leadId = data.lead_id;
+                        localStorage.setItem('clientLeadId', leadId);
+                        if (socket && socket.connected) {
+                            socket.emit('join_lead_room', { lead_id: leadId, user_type: 'client' });
+                        }
+                    }
+                    displayTimeline(data.timeline || data.messages || []);
+                    if (data.admin_response && data.lead_status === 'changes_approved') {
+                        showStatusUpdate({ status: 'approved', admin_response: data.admin_response });
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('chat-messages').innerHTML =
+                        '<div style="text-align:center;color:#ef4444;padding:50px;">Error loading chat</div>';
+                });
+        }
+
+        function displayTimeline(items) {
+            const el = document.getElementById('chat-messages');
+            el.innerHTML = '';
+            if (!items.length) {
+                el.innerHTML = '<div style="text-align:center;color:#64748b;padding:50px;">No messages yet. Say hello to admin below!</div>';
+                return;
+            }
+
+            let lastType = null;
+            items.forEach(msg => {
+                if (msg.type !== lastType) {
+                    const label = document.createElement('div');
+                    label.className = 'section-label';
+                    label.textContent = msg.type === 'ai'
+                        ? '— AI requirements chat —'
+                        : '— Support chat with admin —';
+                    el.appendChild(label);
+                    lastType = msg.type;
+                }
+
+                const div = document.createElement('div');
+                let cls = 'chat-message ';
+                if (msg.type === 'ai') {
+                    cls += msg.sender === 'ai' ? 'ai-assistant' : 'ai';
+                } else if (msg.sender === 'admin') {
+                    cls += 'admin';
+                } else {
+                    cls += 'client';
+                }
+                div.className = cls;
+                const label = msg.sender_name || (msg.sender === 'admin' ? 'Admin' : msg.sender === 'ai' ? 'AI Assistant' : clientName);
+                div.innerHTML = `
+                    <div class="sender">${escapeHtml(label)}</div>
+                    <div class="content">${escapeHtml(msg.message)}</div>
+                    <div class="timestamp">${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : ''}</div>`;
+                el.appendChild(div);
+            });
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function sendClientMessage() {
+            const input = document.getElementById('client-message-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            fetch('/api/send-client-message', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client_email: clientEmail, message })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    input.value = '';
+                    loadChatHistory();
+                } else {
+                    showNotification(data.message || 'Send failed', 'error');
+                }
+            })
+            .catch(() => showNotification('Error sending message', 'error'));
+        }
+
+        async function logout() {
+            await fetch('/api/client/logout', { method: 'POST', credentials: 'include' });
+            localStorage.removeItem('clientEmail');
+            localStorage.removeItem('clientName');
+            localStorage.removeItem('clientLeadId');
+            window.location.href = '/client_login';
+        }
+
+        function showNotification(message, type) {
+            const n = document.createElement('div');
+            n.className = `notification ${type}`;
+            n.textContent = message;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 4000);
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text || '';
+            return d.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('email')) clientEmail = params.get('email');
+            const ok = await ensureSession();
+            if (!ok) return;
+            initSocket();
+            loadChatHistory();
+            document.getElementById('client-message-input').addEventListener('keypress', e => {
+                if (e.key === 'Enter') sendClientMessage();
+            });
+        });
+    </script>
+</body>
+</html>

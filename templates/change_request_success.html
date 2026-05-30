@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Request Submitted!</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            text-align: center; 
+        }
+        .success { 
+            color: #ffc107; 
+            font-size: 48px; 
+            margin-bottom: 20px; 
+        }
+        .btn { 
+            display: inline-block; 
+            padding: 12px 24px; 
+            background: #007bff; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            margin: 10px 0; 
+            border: none; 
+            cursor: pointer; 
+        }
+        .btn:hover { 
+            background: #0056b3; 
+        }
+        .changes-summary {
+            text-align: left;
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success">📝</div>
+        <h1>Change Request Submitted!</h1>
+        <p>Thank you {{ project.name }}!</p>
+        <p>Your change request has been successfully submitted.</p>
+        <p>We will review your requested changes and get back to you within 24 hours.</p>
+        
+        {% if changes %}
+        <div class="changes-summary">
+            <h3>Your Requested Changes:</h3>
+            <p>{{ changes }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="next-steps">
+            <h3>What Happens Next:</h3>
+            <ol>
+                <li>Our team reviews your change request</li>
+                <li>We'll update the project proposal if needed</li>
+                <li>You'll receive an updated proposal via email</li>
+                <li>You can then confirm the updated proposal</li>
+            </ol>
+        </div>
+        
+        <a href="/client_login" class="btn">💬 Open live chat with admin</a>
+        {% if lead_id %}
+        <a href="/client_chat?email={{ project.email | urlencode }}&lead_id={{ lead_id }}" class="btn" style="background:#10b981;margin-left:8px;">Continue to chat</a>
+        {% endif %}
+        <a href="mailto:{{ project.email }}" class="btn btn-secondary" style="background:#6c757d;">📧 Email us</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Context Dashboard - AI Lead Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-project-diagram me-2"></i>Context Dashboard</h1>
+                <button class="btn btn-primary" onclick="refreshContextData()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalContexts">0</h4>
+                            <p class="mb-0">Total Contexts</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-layer-group fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="activeProjects">0</h4>
+                            <p class="mb-0">Active Projects</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-tasks fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="userProfiles">0</h4>
+                            <p class="mb-0">User Profiles</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="contextAccuracy">0%</h4>
+                            <p class="mb-0">Context Accuracy</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-bullseye fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-area me-2"></i>Context Evolution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="contextEvolutionChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Context Categories</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="contextCategoriesChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Context Updates -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Recent Context Updates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>User</th>
+                                    <th>Context Type</th>
+                                    <th>Project</th>
+                                    <th>Update Summary</th>
+                                    <th>Confidence</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contextUpdatesTable">
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading context data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Management -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-search me-2"></i>Context Search</h5>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="contextSearchInput" placeholder="Search contexts...">
+                        <button class="btn btn-outline-primary" onclick="searchContexts()">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs me-2"></i>Context Operations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-warning" onclick="rebuildContextIndex()">
+                            <i class="fas fa-redo me-1"></i>Rebuild Context Index
+                        </button>
+                        <button class="btn btn-info" onclick="analyzeContextPatterns()">
+                            <i class="fas fa-chart-line me-1"></i>Analyze Patterns
+                        </button>
+                        <button class="btn btn-success" onclick="exportContextData()">
+                            <i class="fas fa-download me-1"></i>Export Context Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Context Dashboard JavaScript
+let contextEvolutionChart, contextCategoriesChart;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadContextData();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadContextData, 30000);
+});
+
+function initializeCharts() {
+    // Context Evolution Chart
+    const evolutionCtx = document.getElementById('contextEvolutionChart').getContext('2d');
+    contextEvolutionChart = new Chart(evolutionCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Context Quality Score',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }, {
+                label: 'User Satisfaction',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // Context Categories Chart
+    const categoriesCtx = document.getElementById('contextCategoriesChart').getContext('2d');
+    contextCategoriesChart = new Chart(categoriesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Projects', 'Users', 'Requirements', 'Preferences', 'History'],
+            datasets: [{
+                label: 'Context Items',
+                data: [65, 45, 80, 35, 55],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function loadContextData() {
+    // Fetch context statistics
+    fetch('/api/context/stats')
+        .then(response => response.json())
+        .then(data => {
+            updateContextStats(data);
+            updateContextActivity(data.updates);
+        })
+        .catch(error => {
+            console.error('Error loading context data:', error);
+            document.getElementById('contextUpdatesTable').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading context data</td></tr>';
+        });
+}
+
+function updateContextStats(data) {
+    document.getElementById('totalContexts').textContent = data.totalContexts || 0;
+    document.getElementById('activeProjects').textContent = data.activeProjects || 0;
+    document.getElementById('userProfiles').textContent = data.userProfiles || 0;
+    document.getElementById('contextAccuracy').textContent = (data.contextAccuracy || 0) + '%';
+}
+
+function updateContextActivity(updates) {
+    const tableBody = document.getElementById('contextUpdatesTable');
+    
+    if (!updates || updates.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No context updates found</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = updates.map(item => `
+        <tr>
+            <td>${new Date(item.timestamp).toLocaleString()}</td>
+            <td>${item.user}</td>
+            <td><span class="badge bg-primary">${item.context_type}</span></td>
+            <td>${item.project}</td>
+            <td>${item.update_summary}</td>
+            <td>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar bg-${getConfidenceColor(item.confidence)}" style="width: ${item.confidence}%">
+                        ${item.confidence}%
+                    </div>
+                </div>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewContextDetails('${item.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getConfidenceColor(confidence) {
+    if (confidence >= 80) return 'success';
+    if (confidence >= 60) return 'warning';
+    return 'danger';
+}
+
+function refreshContextData() {
+    loadContextData();
+    showNotification('Context data refreshed', 'success');
+}
+
+function searchContexts() {
+    const searchTerm = document.getElementById('contextSearchInput').value;
+    if (!searchTerm) {
+        showNotification('Please enter a search term', 'warning');
+        return;
+    }
+    
+    fetch(`/api/context/search?q=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(data => {
+            displaySearchResults(data);
+        })
+        .catch(error => {
+            showNotification('Error searching contexts', 'error');
+        });
+}
+
+function displaySearchResults(results) {
+    const resultsDiv = document.getElementById('searchResults');
+    
+    if (!results || results.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-muted">No results found</p>';
+        return;
+    }
+    
+    resultsDiv.innerHTML = results.map(result => `
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <h6 class="card-title mb-1">${result.title}</h6>
+                <p class="card-text small text-muted">${result.description}</p>
+                <small class="text-muted">Updated: ${new Date(result.updated_at).toLocaleString()}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+function rebuildContextIndex() {
+    if (confirm('Are you sure you want to rebuild the context index? This may take a few minutes.')) {
+        fetch('/api/context/rebuild', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(data.message, data.status);
+                loadContextData();
+            })
+            .catch(error => {
+                showNotification('Error rebuilding context index', 'error');
+            });
+    }
+}
+
+function analyzeContextPatterns() {
+    fetch('/api/context/analyze', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            showNotification('Context analysis completed', 'success');
+            // Update charts with new data
+            updateChartsWithAnalysis(data);
+        })
+        .catch(error => {
+            showNotification('Error analyzing context patterns', 'error');
+        });
+}
+
+function exportContextData() {
+    window.open('/api/context/export', '_blank');
+}
+
+function viewContextDetails(contextId) {
+    // Implementation for viewing context details
+    console.log('View context details:', contextId);
+}
+
+function updateChartsWithAnalysis(analysisData) {
+    // Update charts with analysis results
+    if (analysisData.evolution) {
+        contextEvolutionChart.data.labels = analysisData.evolution.labels;
+        contextEvolutionChart.data.datasets[0].data = analysisData.evolution.quality;
+        contextEvolutionChart.data.datasets[1].data = analysisData.evolution.satisfaction;
+        contextEvolutionChart.update();
+    }
+}
+
+function showNotification(message, type) {
+    // Create and show notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

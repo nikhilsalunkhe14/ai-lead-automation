@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block title %}Memory Dashboard - AI Lead Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-brain me-2"></i>Memory Dashboard</h1>
+                <button class="btn btn-primary" onclick="refreshMemoryData()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalMemories">0</h4>
+                            <p class="mb-0">Total Memories</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-database fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="activeSessions">0</h4>
+                            <p class="mb-0">Active Sessions</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="contextItems">0</h4>
+                            <p class="mb-0">Context Items</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-project-diagram fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="aiResponses">0</h4>
+                            <p class="mb-0">AI Responses</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>Memory Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="memoryTrendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Memory Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="memoryDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Memory Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history me-2"></i>Recent Memory Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Email</th>
+                                    <th>Session ID</th>
+                                    <th>Memory Type</th>
+                                    <th>Content Preview</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memoryActivityTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading memory data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Management -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cogs me-2"></i>Memory Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <button class="btn btn-warning w-100" onclick="clearOldMemories()">
+                                <i class="fas fa-trash me-1"></i>Clear Old Memories
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-info w-100" onclick="optimizeMemory()">
+                                <i class="fas fa-compress me-1"></i>Optimize Memory
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-success w-100" onclick="exportMemoryData()">
+                                <i class="fas fa-download me-1"></i>Export Memory Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Memory Dashboard JavaScript
+let memoryTrendsChart, memoryDistributionChart;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadMemoryData();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadMemoryData, 30000);
+});
+
+function initializeCharts() {
+    // Memory Trends Chart
+    const trendsCtx = document.getElementById('memoryTrendsChart').getContext('2d');
+    memoryTrendsChart = new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'New Memories',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }, {
+                label: 'AI Responses',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Memory Distribution Chart
+    const distributionCtx = document.getElementById('memoryDistributionChart').getContext('2d');
+    memoryDistributionChart = new Chart(distributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Chat History', 'User Context', 'AI Responses', 'Summaries'],
+            datasets: [{
+                data: [30, 25, 25, 20],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function loadMemoryData() {
+    // Fetch memory statistics
+    fetch('/api/memory/stats')
+        .then(response => response.json())
+        .then(data => {
+            updateMemoryStats(data);
+            updateMemoryActivity(data.activity);
+        })
+        .catch(error => {
+            console.error('Error loading memory data:', error);
+            document.getElementById('memoryActivityTable').innerHTML = 
+                '<tr><td colspan="6" class="text-center text-danger">Error loading memory data</td></tr>';
+        });
+}
+
+function updateMemoryStats(data) {
+    document.getElementById('totalMemories').textContent = data.totalMemories || 0;
+    document.getElementById('activeSessions').textContent = data.activeSessions || 0;
+    document.getElementById('contextItems').textContent = data.contextItems || 0;
+    document.getElementById('aiResponses').textContent = data.aiResponses || 0;
+}
+
+function updateMemoryActivity(activity) {
+    const tableBody = document.getElementById('memoryActivityTable');
+    
+    if (!activity || activity.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No memory activity found</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = activity.map(item => `
+        <tr>
+            <td>${new Date(item.timestamp).toLocaleString()}</td>
+            <td>${item.email}</td>
+            <td>${item.session_id}</td>
+            <td><span class="badge bg-primary">${item.memory_type}</span></td>
+            <td>${item.content_preview}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewMemoryDetails('${item.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function refreshMemoryData() {
+    loadMemoryData();
+    showNotification('Memory data refreshed', 'success');
+}
+
+function clearOldMemories() {
+    if (confirm('Are you sure you want to clear old memories? This action cannot be undone.')) {
+        fetch('/api/memory/clear-old', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(data.message, data.status);
+                loadMemoryData();
+            })
+            .catch(error => {
+                showNotification('Error clearing old memories', 'error');
+            });
+    }
+}
+
+function optimizeMemory() {
+    fetch('/api/memory/optimize', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            showNotification(data.message, data.status);
+            loadMemoryData();
+        })
+        .catch(error => {
+            showNotification('Error optimizing memory', 'error');
+        });
+}
+
+function exportMemoryData() {
+    window.open('/api/memory/export', '_blank');
+}
+
+function viewMemoryDetails(memoryId) {
+    // Implementation for viewing memory details
+    console.log('View memory details:', memoryId);
+}
+
+function showNotification(message, type) {
+    // Create and show notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

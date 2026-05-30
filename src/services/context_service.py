@@ -223,7 +223,7 @@ class ContextService:
                 
                 # Add scoring metadata
                 memory['relevance_score'] = relevance_score
-                'importance_score'] = importance_score
+                memory['importance_score'] = importance_score
                 memory['recency_score'] = recency_score
                 memory['final_score'] = final_score
                 memory['retrieval_reason'] = memory.get('retrieval_reason', 'semantic_search')

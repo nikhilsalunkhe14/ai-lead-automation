@@ -1,0 +1,459 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - AI Lead Automation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h1>
+                <div>
+                    <button class="btn btn-secondary me-2" onclick="exportReport()">
+                        <i class="fas fa-download me-1"></i>Export Report
+                    </button>
+                    <button class="btn btn-primary" onclick="refreshAnalytics()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Performance Indicators -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalLeads">0</h4>
+                            <p class="mb-0">Total Leads</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small><i class="fas fa-arrow-up"></i> +12% from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="conversionRate">0%</h4>
+                            <p class="mb-0">Conversion Rate</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-percentage fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small><i class="fas fa-arrow-up"></i> +5% from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="aiResponses">0</h4>
+                            <p class="mb-0">AI Responses</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small><i class="fas fa-arrow-up"></i> +25% from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="avgResponseTime">0s</h4>
+                            <p class="mb-0">Avg Response Time</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small><i class="fas fa-arrow-down"></i> -2s from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-area me-2"></i>Lead Generation Trends</h5>
+                    <div class="btn-group btn-group-sm float-end">
+                        <button class="btn btn-outline-primary" onclick="updateChartPeriod('week')">Week</button>
+                        <button class="btn btn-outline-primary active" onclick="updateChartPeriod('month')">Month</button>
+                        <button class="btn btn-outline-primary" onclick="updateChartPeriod('year')">Year</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="leadTrendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Lead Sources</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="leadSourcesChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Lead Quality Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="leadQualityChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>AI Performance Metrics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="aiPerformanceChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history me-2"></i>Recent Lead Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Lead Score</th>
+                                    <th>Status</th>
+                                    <th>AI Response</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityTable">
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading analytics data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Analytics Dashboard JavaScript
+let leadTrendsChart, leadSourcesChart, leadQualityChart, aiPerformanceChart;
+let currentPeriod = 'month';
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadAnalyticsData();
+    
+    // Auto-refresh every 60 seconds
+    setInterval(loadAnalyticsData, 60000);
+});
+
+function initializeCharts() {
+    // Lead Trends Chart
+    const trendsCtx = document.getElementById('leadTrendsChart').getContext('2d');
+    leadTrendsChart = new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'New Leads',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }, {
+                label: 'Converted Leads',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Lead Sources Chart
+    const sourcesCtx = document.getElementById('leadSourcesChart').getContext('2d');
+    leadSourcesChart = new Chart(sourcesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Website', 'Social Media', 'Email', 'Referral', 'Direct'],
+            datasets: [{
+                data: [35, 25, 20, 15, 5],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Lead Quality Chart
+    const qualityCtx = document.getElementById('leadQualityChart').getContext('2d');
+    leadQualityChart = new Chart(qualityCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Hot', 'Warm', 'Cold', 'Lost'],
+            datasets: [{
+                label: 'Number of Leads',
+                data: [45, 65, 30, 10],
+                backgroundColor: [
+                    '#FF6384',
+                    '#FFCE56',
+                    '#36A2EB',
+                    '#9966FF'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // AI Performance Chart
+    const performanceCtx = document.getElementById('aiPerformanceChart').getContext('2d');
+    aiPerformanceChart = new Chart(performanceCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Accuracy', 'Speed', 'Relevance', 'Personalization', 'Conversion'],
+            datasets: [{
+                label: 'Current Month',
+                data: [85, 90, 78, 82, 88],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)'
+            }, {
+                label: 'Previous Month',
+                data: [80, 85, 75, 78, 82],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+function loadAnalyticsData() {
+    // Fetch analytics statistics
+    fetch(`/api/analytics/stats?period=${currentPeriod}`)
+        .then(response => response.json())
+        .then(data => {
+            updateKPIs(data.kpis);
+            updateCharts(data.charts);
+            updateRecentActivity(data.activity);
+        })
+        .catch(error => {
+            console.error('Error loading analytics data:', error);
+            document.getElementById('recentActivityTable').innerHTML = 
+                '<tr><td colspan="7" class="text-center text-danger">Error loading analytics data</td></tr>';
+        });
+}
+
+function updateKPIs(kpis) {
+    document.getElementById('totalLeads').textContent = kpis.totalLeads || 0;
+    document.getElementById('conversionRate').textContent = (kpis.conversionRate || 0) + '%';
+    document.getElementById('aiResponses').textContent = kpis.aiResponses || 0;
+    document.getElementById('avgResponseTime').textContent = (kpis.avgResponseTime || 0) + 's';
+}
+
+function updateCharts(chartsData) {
+    if (chartsData.leadTrends) {
+        leadTrendsChart.data.labels = chartsData.leadTrends.labels;
+        leadTrendsChart.data.datasets[0].data = chartsData.leadTrends.newLeads;
+        leadTrendsChart.data.datasets[1].data = chartsData.leadTrends.convertedLeads;
+        leadTrendsChart.update();
+    }
+
+    if (chartsData.leadSources) {
+        leadSourcesChart.data.datasets[0].data = chartsData.leadSources;
+        leadSourcesChart.update();
+    }
+
+    if (chartsData.leadQuality) {
+        leadQualityChart.data.datasets[0].data = chartsData.leadQuality;
+        leadQualityChart.update();
+    }
+
+    if (chartsData.aiPerformance) {
+        aiPerformanceChart.data.datasets[0].data = chartsData.aiPerformance.current;
+        aiPerformanceChart.data.datasets[1].data = chartsData.aiPerformance.previous;
+        aiPerformanceChart.update();
+    }
+}
+
+function updateRecentActivity(activity) {
+    const tableBody = document.getElementById('recentActivityTable');
+    
+    if (!activity || activity.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No recent activity found</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = activity.map(item => `
+        <tr>
+            <td>${new Date(item.timestamp).toLocaleString()}</td>
+            <td>${item.name}</td>
+            <td>${item.email}</td>
+            <td>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar bg-${getScoreColor(item.lead_score)}" style="width: ${item.lead_score}%">
+                        ${item.lead_score}%
+                    </div>
+                </div>
+            </td>
+            <td><span class="badge bg-${getStatusColor(item.status)}">${item.status}</span></td>
+            <td>${item.ai_response ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewLeadDetails('${item.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getScoreColor(score) {
+    if (score >= 80) return 'success';
+    if (score >= 60) return 'warning';
+    return 'danger';
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'new': return 'primary';
+        case 'contacted': return 'info';
+        case 'qualified': return 'success';
+        case 'converted': return 'success';
+        case 'lost': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function updateChartPeriod(period) {
+    currentPeriod = period;
+    
+    // Update button states
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Reload data for new period
+    loadAnalyticsData();
+}
+
+function refreshAnalytics() {
+    loadAnalyticsData();
+    showNotification('Analytics data refreshed', 'success');
+}
+
+function exportReport() {
+    const period = currentPeriod;
+    window.open(`/api/analytics/export?period=${period}`, '_blank');
+    showNotification('Report export started', 'info');
+}
+
+function viewLeadDetails(leadId) {
+    // Implementation for viewing lead details
+    console.log('View lead details:', leadId);
+}
+
+function showNotification(message, type) {
+    // Create and show notification
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
