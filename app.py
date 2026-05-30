@@ -685,7 +685,7 @@ def send_email_to_user(name, email, ai_reply):
                     </div>
                     
                     <div class="cta-section">
-                        <a href="http://127.0.0.1:5000" class="cta-button">
+                        <a href="{os.getenv('PUBLIC_BASE_URL', get_public_base_url())}" class="cta-button">
                             Start New Project Analysis
                         </a>
                     </div>
