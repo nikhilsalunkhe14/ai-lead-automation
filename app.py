@@ -786,8 +786,8 @@ def send_email_via_python_smtp(to_email, subject, html_content):
             
         except Exception as smtp_error:
             print(f"❌ SMTP Error: {smtp_error}")
-            # Fallback to simulation if SMTP fails
-            return True, f"Email simulated (SMTP not configured): {to_email}"
+            # Return False to indicate email was not actually sent
+            return False, f"SMTP failed: {str(smtp_error)}"
         
     except Exception as e:
         error_msg = str(e)
