@@ -43,18 +43,23 @@ def main():
         print("=" * 60)
     
     # Run the Flask application
-    print("🌐 Starting Flask server on http://127.0.0.1:5000")
-    print("📱 Admin Dashboard: http://127.0.0.1:5000/admin_dashboard")
-    print("💬 Chat Interface: http://127.0.0.1:5000/dashboard")
-    print("🔐 Admin Login: http://127.0.0.1:5000/admin_login")
+    # Use PORT environment variable for Render, default to 5000 for local
+    port = int(os.getenv('PORT', 5000))
+    host = os.getenv('HOST', '0.0.0.0')
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    
+    print(f"🌐 Starting Flask server on http://{host}:{port}")
+    print(f"📱 Admin Dashboard: http://{host}:{port}/admin_dashboard")
+    print(f"💬 Chat Interface: http://{host}:{port}/dashboard")
+    print(f"🔐 Admin Login: http://{host}:{port}/admin_login")
     print("=" * 60)
     
     try:
         socketio.run(
             app,
-            host='127.0.0.1',
-            port=5000,
-            debug=True,
+            host=host,
+            port=port,
+            debug=debug,
             allow_unsafe_werkzeug=True,
         )
     except KeyboardInterrupt:
